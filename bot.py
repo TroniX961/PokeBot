@@ -23,3 +23,5 @@ async def daily_post():
         await channel.send(f"🛒 **Tägliche Pokémon-Angebote ({now})**\n*Hier erscheinen bald die neuesten Angebote!*")
 
 bot.run(os.getenv("DISCORD_TOKEN"))
+
+#test
