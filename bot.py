@@ -67,6 +67,51 @@ def check_lidl_offers():
         "Connection": "keep-alive"
     }
 
+    #Galeria
+
+def check_galeria_offers():
+    url = "https://www.galeria.de/search?q=pokemon"
+    
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/125.0.6422.112 Safari/537.36"
+        ),
+        "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Referer": "https://www.google.com"
+    }
+
+    # ⏱️ Delay von 3 Sekunden, damit GALERIA den Bot nicht blockt
+    time.sleep(3)
+
+    try:
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+    except Exception as e:
+        return f"❌ Fehler beim Abrufen der GALERIA-Seite: {e}"
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    offers = []
+
+    for product in soup.select("article.product-tile"):
+        title_el = product.select_one(".product-title")
+        price_el = product.select_one(".price")
+
+        if title_el and price_el:
+            title = title_el.get_text(strip=True)
+            price = price_el.get_text(strip=True)
+
+            # 🔎 Filter auf relevante Pokémon-Produkte
+            if any(keyword in title.lower() for keyword in ["booster", "display", "pokemon", "blister", "einzelkarte"]):
+                offers.append(f"{title} – {price}")
+
+    if offers:
+        return "🛍️ **GALERIA-Angebote:**\n" + "\n".join(offers)
+    else:
+        return "ℹ️ Keine aktuellen GALERIA-Angebote gefunden."
+
     session = requests.Session()
     time.sleep(2)  # Kurze Pause für Freundlichkeit
 
@@ -108,9 +153,15 @@ async def daily_post():
 
     smyths_msg = check_smyths_offers()
     lidl_msg = check_lidl_offers()
+    galeria_msg = check_galeria_offers()
 
     now = datetime.datetime.now().strftime("%d.%m.%Y")
-    message = f"🛒 **Tägliche Pokémon-Angebote ({now})**\n\n{smyths_msg}\n\n{lidl_msg}"
+    message = (
+        f"🛒 **Tägliche Pokémon-Angebote ({now})**\n\n"
+        f"{smyths_msg}\n\n"
+        f"{lidl_msg}\n\n"
+        f"{galeria_msg}"
+    )
 
     await channel.send(message)
 
