@@ -56,6 +56,7 @@ def check_smyths_offers():
     else:
         return "Keine reduzierten Smyths Pokémon-Angebote gefunden."
 
+
 # Lidl
 
 def check_lidl_offers():
@@ -105,12 +106,14 @@ def check_galeria_offers():
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
         "Connection": "keep-alive",
-        "Referer": "https://www.google.com/"
+        "Referer": "https://www.google.com/",
+        "Origin": "https://www.galeria.de"
     }
 
+    session = requests.Session()
     time.sleep(3)
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = session.get(url, headers=headers, timeout=10)
         response.raise_for_status()
     except Exception as e:
         return f"❌ Fehler beim Abrufen der GALERIA-Seite: {e}"
@@ -120,19 +123,16 @@ def check_galeria_offers():
 
     for item in soup.select("article[data-test='product-tile']"):
         title_el = item.select_one("h2")
-        price_now = item.select_one(".product-tile-price__actual")
-        price_was = item.select_one(".product-tile-price__former")
+        price_el = item.select_one(".product-tile-price__actual")
 
-        if title_el and price_now and price_was:
+        if title_el and price_el:
             title = title_el.text.strip()
-            price_now = price_now.text.strip()
-            price_was = price_was.text.strip()
-
+            price = price_el.text.strip()
             if "pokemon" in title.lower():
-                offers.append(f"{title} - **{price_now}** statt ~~{price_was}~~")
+                offers.append(f"{title} - {price}")
 
     if offers:
-        return "🏍️ GALERIA Angebote:\n" + "\n".join(offers)
+        return "🛍️ GALERIA Angebote:\n" + "\n".join(offers)
     else:
         return "Keine aktuellen GALERIA Pokémon-Angebote gefunden."
 
