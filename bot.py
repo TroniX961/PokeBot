@@ -68,10 +68,12 @@ def check_lidl_offers():
     }
 
     session = requests.Session()
-    time.sleep(2)  # Kurze Verzögerung
+    time.sleep(2)  # Kurze Pause für Freundlichkeit
 
     try:
         response = session.get(url, headers=headers, timeout=10)
+        if response.status_code == 404:
+            return "Keine aktuellen Lidl Pokémon-Angebote gefunden."
         response.raise_for_status()
     except Exception as e:
         return f"❌ Fehler beim Abrufen der Lidl-Seite: {e}"
