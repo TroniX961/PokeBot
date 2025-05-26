@@ -28,8 +28,7 @@ def check_smyths_offers():
         "Referer": "https://www.smythstoys.com/"
     }
 
-    time.sleep(2)  # Kurze Pause vor dem Abruf
-    
+    time.sleep(2)
     session = requests.Session()
     try:
         response = session.get(url, headers=headers, timeout=10)
@@ -42,19 +41,23 @@ def check_smyths_offers():
 
     for product in soup.select(".product-tile"):
         title_el = product.select_one(".product-title")
-        price_el = product.select_one(".price-now")
-        if title_el and price_el:
+        price_now = product.select_one(".price-now")
+        price_was = product.select_one(".price-was")
+
+        if title_el and price_now and price_was:
             title = title_el.text.strip()
-            price = price_el.text.strip()
+            price_now = price_now.text.strip()
+            price_was = price_was.text.strip()
             if "booster" in title.lower():
-                offers.append(f"{title} - {price}")
+                offers.append(f"{title} - **{price_now}** statt ~~{price_was}~~")
 
     if offers:
-        return "🛍️ Smyths Angebote:\n" + "\n".join(offers)
+        return "🏍️ Smyths Angebote:\n" + "\n".join(offers)
     else:
         return "Keine aktuellen Smyths Booster-Angebote gefunden."
 
 # Lidl
+
 def check_lidl_offers():
     url = "https://www.lidl.de/de/search?query=pokemon"
     headers = {
@@ -63,8 +66,7 @@ def check_lidl_offers():
                       "Chrome/114.0.0.0 Safari/537.36"
     }
 
-    time.sleep(2)  # Etwas Verzögerung gegen Blockaden
-
+    time.sleep(2)
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
@@ -76,37 +78,37 @@ def check_lidl_offers():
 
     for item in soup.select(".product-grid-box"):
         title_el = item.select_one(".product-title")
-        price_el = item.select_one(".m-price__price")
+        price_now = item.select_one(".m-price__price")
+        price_was = item.select_one(".m-price__strike")
 
-        if title_el and price_el:
+        if title_el and price_now and price_was:
             title = title_el.get_text(strip=True)
-            price = price_el.get_text(strip=True)
+            price_now = price_now.get_text(strip=True)
+            price_was = price_was.get_text(strip=True)
 
             if "pokemon" in title.lower():
-                offers.append(f"{title} – {price}")
+                offers.append(f"{title} – **{price_now}** statt ~~{price_was}~~")
 
     if offers:
-        return "🛍️ Lidl-Angebote:\n" + "\n".join(offers)
+        return "🏍️ Lidl-Angebote:\n" + "\n".join(offers)
     else:
         return "Keine aktuellen Lidl-Angebote gefunden."
 
-    #Galeria
+# Galeria
 
 def check_galeria_offers():
     url = "https://www.galeria.de/search?q=pokemon"
-  headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/123.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Connection": "keep-alive",
-    "Referer": "https://www.google.com/"
-}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/123.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Connection": "keep-alive",
+        "Referer": "https://www.google.com/"
     }
 
-    time.sleep(3)  # Realistischer Delay
-
+    time.sleep(3)
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
@@ -118,21 +120,24 @@ def check_galeria_offers():
 
     for item in soup.select("article[data-test='product-tile']"):
         title_el = item.select_one("h2")
-        price_el = item.select_one(".product-tile-price__actual")
+        price_now = item.select_one(".product-tile-price__actual")
+        price_was = item.select_one(".product-tile-price__former")
 
-        if title_el and price_el:
+        if title_el and price_now and price_was:
             title = title_el.text.strip()
-            price = price_el.text.strip()
+            price_now = price_now.text.strip()
+            price_was = price_was.text.strip()
+
             if "pokemon" in title.lower():
-                offers.append(f"{title} - {price}")
+                offers.append(f"{title} - **{price_now}** statt ~~{price_was}~~")
 
     if offers:
-        return "🛍️ GALERIA Angebote:\n" + "\n".join(offers)
+        return "🏍️ GALERIA Angebote:\n" + "\n".join(offers)
     else:
         return "Keine aktuellen GALERIA Pokémon-Angebote gefunden."
 
-
 # Täglicher Task
+
 @tasks.loop(hours=24)
 async def daily_post():
     channel = PokeBot.get_channel(CHANNEL_ID)
@@ -154,13 +159,13 @@ async def daily_post():
 
     await channel.send(message)
 
-
 # Event: Bot startbereit
+
 @PokeBot.event
 async def on_ready():
     print(f"PokeBot ist eingeloggt als {PokeBot.user}")
-    await daily_post()       # Sofort beim Start einmal posten
-    daily_post.start()       # Danach täglich wiederholen
+    await daily_post()
+    daily_post.start()
 
 # Bot starten
 PokeBot.run(os.getenv("DISCORD_TOKEN"))
