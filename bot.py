@@ -60,13 +60,18 @@ def check_lidl_offers():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/114.0.0.0 Safari/537.36"
+                      "Chrome/122.0.0.0 Safari/537.36",
+        "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Referer": "https://www.lidl.de",
+        "Connection": "keep-alive"
     }
 
-    time.sleep(2)  # Verzögerung gegen Bot-Erkennung
+    session = requests.Session()
+    time.sleep(2)  # Kurze Verzögerung
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = session.get(url, headers=headers, timeout=10)
         response.raise_for_status()
     except Exception as e:
         return f"❌ Fehler beim Abrufen der Lidl-Seite: {e}"
