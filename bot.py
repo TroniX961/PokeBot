@@ -6,10 +6,17 @@ import requests
 from bs4 import BeautifulSoup
 import time
 
-CHANNEL_ID = 1376580028636205238  # Deine Discord-Channel-ID als int
+# Intents definieren (z. B. um Nachrichten zu senden)
+intents = discord.Intents.default()
+intents.message_content = True  # Erforderlich, damit der Bot Nachrichten lesen/schreiben darf
 
-PokeBot = commands.Bot(command_prefix="!")
+# Bot-Objekt erstellen mit Prefix und Intents
+PokeBot = commands.Bot(command_prefix="!", intents=intents)
 
+# Channel-ID für die Angebotsnachrichten
+CHANNEL_ID = 1376580028636205238
+
+# Funktion: Smyths-Angebote prüfen
 def check_smyths_offers():
     url = "https://www.smythstoys.com/de/de-de/toys/spielzeug/pokemon/boosters"
     headers = {
@@ -20,8 +27,8 @@ def check_smyths_offers():
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Referer": "https://www.smythstoys.com/"
     }
-    
-    time.sleep(2)  # Warte 2 Sekunden vor dem Request
+
+    time.sleep(2)  # Kurze Pause vor dem Abruf
     
     session = requests.Session()
     try:
@@ -47,24 +54,26 @@ def check_smyths_offers():
     else:
         return "Keine aktuellen Smyths Booster-Angebote gefunden."
 
+# Täglicher Task
 @tasks.loop(hours=24)
 async def daily_post():
     channel = PokeBot.get_channel(CHANNEL_ID)
     if not channel:
-        print("Channel nicht gefunden!")
+        print("❗ Channel nicht gefunden.")
         return
 
     smyths_msg = check_smyths_offers()
-
     now = datetime.datetime.now().strftime("%d.%m.%Y")
     message = f"🛒 **Tägliche Pokémon-Angebote ({now})**\n\n{smyths_msg}"
 
     await channel.send(message)
 
+# Event: Bot startbereit
 @PokeBot.event
 async def on_ready():
     print(f"PokeBot ist eingeloggt als {PokeBot.user}")
-    await daily_post()  # Sofort posten beim Start
-    daily_post.start()  # Danach jeden Tag posten
+    await daily_post()       # Sofort beim Start einmal posten
+    daily_post.start()       # Danach täglich wiederholen
 
+# Bot starten
 PokeBot.run(os.getenv("DISCORD_TOKEN"))
