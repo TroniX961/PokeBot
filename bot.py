@@ -54,19 +54,57 @@ def check_smyths_offers():
     else:
         return "Keine aktuellen Smyths Booster-Angebote gefunden."
 
+def check_lidl_offers():
+    url = "https://www.lidl.de/q/pokemon"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/114.0.0.0 Safari/537.36"
+    }
+
+    time.sleep(2)  # Etwas Verzögerung gegen Blockaden
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+    except Exception as e:
+        return f"❌ Fehler beim Abrufen der Lidl-Seite: {e}"
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    offers = []
+
+    for item in soup.select(".product-grid-box"):
+        title_el = item.select_one(".product-title")
+        price_el = item.select_one(".m-price__price")
+
+        if title_el and price_el:
+            title = title_el.get_text(strip=True)
+            price = price_el.get_text(strip=True)
+
+            if "pokemon" in title.lower():
+                offers.append(f"{title} – {price}")
+
+    if offers:
+        return "🛍️ Lidl-Angebote:\n" + "\n".join(offers)
+    else:
+        return "Keine aktuellen Lidl-Angebote gefunden."
+
 # Täglicher Task
 @tasks.loop(hours=24)
 async def daily_post():
     channel = PokeBot.get_channel(CHANNEL_ID)
     if not channel:
-        print("❗ Channel nicht gefunden.")
+        print("Channel nicht gefunden!")
         return
 
     smyths_msg = check_smyths_offers()
+    lidl_msg = check_lidl_offers()
+
     now = datetime.datetime.now().strftime("%d.%m.%Y")
-    message = f"🛒 **Tägliche Pokémon-Angebote ({now})**\n\n{smyths_msg}"
+    message = f"🛒 **Tägliche Pokémon-Angebote ({now})**\n\n{smyths_msg}\n\n{lidl_msg}"
 
     await channel.send(message)
+
 
 # Event: Bot startbereit
 @PokeBot.event
