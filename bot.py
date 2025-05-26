@@ -18,7 +18,7 @@ CHANNEL_ID = 1376580028636205238
 
 # Funktion: Smyths-Angebote prüfen
 def check_smyths_offers():
-    url = "https://www.smythstoys.com/de/de-de/toys/spielzeug/pokemon/boosters"
+    url = "https://www.smythstoys.com/de/de-de/search/?text=pokemon+booster"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
