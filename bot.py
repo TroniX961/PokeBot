@@ -129,6 +129,30 @@ def check_galeria_offers_selenium():
     else:
         return "Keine aktuellen GALERIA Pokémon-Angebote gefunden."
 
+
+# Daly Post
+
+@tasks.loop(hours=24)
+async def daily_post():
+    channel = PokeBot.get_channel(CHANNEL_ID)
+    if not channel:
+        print("Channel nicht gefunden!")
+        return
+
+    smyths_msg = check_smyths_offers()
+    lidl_msg = check_lidl_offers()
+    galeria_msg = check_galeria_offers()
+
+    now = datetime.datetime.now().strftime("%d.%m.%Y")
+    message = (
+        f"🛒 **Tägliche Pokémon-Angebote ({now})**\n\n"
+        f"{smyths_msg}\n\n"
+        f"{lidl_msg}\n\n"
+        f"{galeria_msg}"
+    )
+
+    await channel.send(message)
+
 # Event: Bot startbereit
 
 @PokeBot.event
