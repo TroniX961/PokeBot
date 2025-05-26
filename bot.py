@@ -54,15 +54,16 @@ def check_smyths_offers():
     else:
         return "Keine aktuellen Smyths Booster-Angebote gefunden."
 
+# Lidl
 def check_lidl_offers():
-    url = "https://www.lidl.de/q/pokemon"
+    url = "https://www.lidl.de/suche?query=pokemon"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/114.0.0.0 Safari/537.36"
     }
 
-    time.sleep(2)  # Etwas Verzögerung gegen Blockaden
+    time.sleep(2)  # Verzögerung gegen Bot-Erkennung
 
     try:
         response = requests.get(url, headers=headers, timeout=10)
@@ -87,7 +88,8 @@ def check_lidl_offers():
     if offers:
         return "🛍️ Lidl-Angebote:\n" + "\n".join(offers)
     else:
-        return "Keine aktuellen Lidl-Angebote gefunden."
+        return "Keine aktuellen Lidl Pokémon-Angebote gefunden."
+
 
 # Täglicher Task
 @tasks.loop(hours=24)
