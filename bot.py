@@ -56,69 +56,17 @@ def check_smyths_offers():
 
 # Lidl
 def check_lidl_offers():
-    url = "https://www.lidl.de/suche?query=pokemon"
+    url = "https://www.lidl.de/q/pokemon"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/122.0.0.0 Safari/537.36",
-        "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Referer": "https://www.lidl.de",
-        "Connection": "keep-alive"
+                      "Chrome/114.0.0.0 Safari/537.36"
     }
 
-    #Galeria
-
-def check_galeria_offers():
-    url = "https://www.galeria.de/search?q=pokemon"
-    
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/125.0.6422.112 Safari/537.36"
-        ),
-        "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Referer": "https://www.google.com"
-    }
-
-    # ⏱️ Delay von 3 Sekunden, damit GALERIA den Bot nicht blockt
-    time.sleep(3)
+    time.sleep(2)  # Etwas Verzögerung gegen Blockaden
 
     try:
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
-    except Exception as e:
-        return f"❌ Fehler beim Abrufen der GALERIA-Seite: {e}"
-
-    soup = BeautifulSoup(response.text, "html.parser")
-    offers = []
-
-    for product in soup.select("article.product-tile"):
-        title_el = product.select_one(".product-title")
-        price_el = product.select_one(".price")
-
-        if title_el and price_el:
-            title = title_el.get_text(strip=True)
-            price = price_el.get_text(strip=True)
-
-            # 🔎 Filter auf relevante Pokémon-Produkte
-            if any(keyword in title.lower() for keyword in ["booster", "display", "pokemon", "blister", "einzelkarte"]):
-                offers.append(f"{title} – {price}")
-
-    if offers:
-        return "🛍️ **GALERIA-Angebote:**\n" + "\n".join(offers)
-    else:
-        return "ℹ️ Keine aktuellen GALERIA-Angebote gefunden."
-
-    session = requests.Session()
-    time.sleep(2)  # Kurze Pause für Freundlichkeit
-
-    try:
-        response = session.get(url, headers=headers, timeout=10)
-        if response.status_code == 404:
-            return "Keine aktuellen Lidl Pokémon-Angebote gefunden."
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
     except Exception as e:
         return f"❌ Fehler beim Abrufen der Lidl-Seite: {e}"
@@ -140,7 +88,46 @@ def check_galeria_offers():
     if offers:
         return "🛍️ Lidl-Angebote:\n" + "\n".join(offers)
     else:
-        return "Keine aktuellen Lidl Pokémon-Angebote gefunden."
+        return "Keine aktuellen Lidl-Angebote gefunden."
+
+    #Galeria
+
+def check_galeria_offers():
+    url = "https://www.galeria.de/search?q=pokemon"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/122.0.0.0 Safari/537.36",
+        "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Referer": "https://www.google.com/"
+    }
+
+    time.sleep(3)  # Realistischer Delay
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+    except Exception as e:
+        return f"❌ Fehler beim Abrufen der GALERIA-Seite: {e}"
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    offers = []
+
+    for item in soup.select("article[data-test='product-tile']"):
+        title_el = item.select_one("h2")
+        price_el = item.select_one(".product-tile-price__actual")
+
+        if title_el and price_el:
+            title = title_el.text.strip()
+            price = price_el.text.strip()
+            if "pokemon" in title.lower():
+                offers.append(f"{title} - {price}")
+
+    if offers:
+        return "🛍️ GALERIA Angebote:\n" + "\n".join(offers)
+    else:
+        return "Keine aktuellen GALERIA Pokémon-Angebote gefunden."
 
 
 # Täglicher Task
