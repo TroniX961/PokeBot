@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands, tasks
 import os
 import datetime
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -97,30 +99,21 @@ def check_lidl_offers():
 
 # Galeria
 
-def check_galeria_offers():
-    url = "https://www.galeria.de/search?q=pokemon"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/123.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Connection": "keep-alive",
-        "Referer": "https://www.google.com/",
-        "Origin": "https://www.galeria.de"
-    }
+def check_galeria_offers_selenium():
+    options = Options()
+    options.add_argument('--headless')  # Browser ohne UI
+    options.add_argument('--disable-gpu')
+    options.add_argument('--no-sandbox')
 
-    session = requests.Session()
-    time.sleep(3)
-    try:
-        response = session.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-    except Exception as e:
-        return f"❌ Fehler beim Abrufen der GALERIA-Seite: {e}"
+    driver = webdriver.Chrome(options=options)
+    driver.get('https://www.galeria.de/search?q=pokemon')
+    time.sleep(5)  # Warte, bis die Seite komplett geladen ist
 
-    soup = BeautifulSoup(response.text, "html.parser")
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    driver.quit()
+
     offers = []
-
     for item in soup.select("article[data-test='product-tile']"):
         title_el = item.select_one("h2")
         price_el = item.select_one(".product-tile-price__actual")
@@ -135,29 +128,6 @@ def check_galeria_offers():
         return "🛍️ GALERIA Angebote:\n" + "\n".join(offers)
     else:
         return "Keine aktuellen GALERIA Pokémon-Angebote gefunden."
-
-# Täglicher Task
-
-@tasks.loop(hours=24)
-async def daily_post():
-    channel = PokeBot.get_channel(CHANNEL_ID)
-    if not channel:
-        print("Channel nicht gefunden!")
-        return
-
-    smyths_msg = check_smyths_offers()
-    lidl_msg = check_lidl_offers()
-    galeria_msg = check_galeria_offers()
-
-    now = datetime.datetime.now().strftime("%d.%m.%Y")
-    message = (
-        f"🛒 **Tägliche Pokémon-Angebote ({now})**\n\n"
-        f"{smyths_msg}\n\n"
-        f"{lidl_msg}\n\n"
-        f"{galeria_msg}"
-    )
-
-    await channel.send(message)
 
 # Event: Bot startbereit
 
