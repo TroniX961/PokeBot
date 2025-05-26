@@ -5,8 +5,7 @@ import datetime
 import time
 import requests
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+
 
 # Intents definieren
 intents = discord.Intents.default()
@@ -23,13 +22,14 @@ def check_smyths_offers():
     url = "https://www.smythstoys.com/de/de-de/search/?text=pokemon"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                      "AppleWebKit/537.36 (KHTML, wie Gecko) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/114.0.0.0 Safari/537.36",
         "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
         "Referer": "https://www.smythstoys.com/"
     }
 
     time.sleep(2)
+
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
@@ -42,18 +42,22 @@ def check_smyths_offers():
     for product in soup.select(".product-tile"):
         title_el = product.select_one(".product-title")
         price_now = product.select_one(".price-now")
-        price_old = product.select_one(".price-was")
+        price_was = product.select_one(".price-was")
+        price_save = product.select_one(".price-save")
 
-        if title_el and price_now and price_old:
+        if title_el and price_now and (price_was or price_save):
             title = title_el.text.strip()
-            new_price = price_now.text.strip()
-            old_price = price_old.text.strip()
+            now_price = price_now.text.strip()
 
-            if "pokemon" in title.lower():
-                offers.append(f"{title} – ~~{old_price}~~ → **{new_price}**")
+            if price_was:
+                old_price = price_was.text.strip()
+                offers.append(f"{title} – ~~{old_price}~~ → **{now_price}**")
+            elif price_save:
+                save_info = price_save.text.strip()
+                offers.append(f"{title} – **{now_price}** ({save_info})")
 
     if offers:
-        return "🛍️ Smyths-Angebote:\n" + "\n".join(offers)
+        return "🛍️ Smyths Angebote:\n" + "\n".join(offers)
     else:
         return "Keine reduzierten Smyths Pokémon-Angebote gefunden."
 
@@ -94,38 +98,7 @@ def check_lidl_offers():
     else:
         return "Keine aktuellen Lidl-Angebote gefunden."
 
-# Galeria-Angebote mit Selenium
-def check_galeria_offers_selenium():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-
-    try:
-        driver = webdriver.Chrome(options=options)
-        driver.get('https://www.galeria.de/search?q=pokemon')
-        time.sleep(5)
-        html = driver.page_source
-        soup = BeautifulSoup(html, 'html.parser')
-        driver.quit()
-    except Exception as e:
-        return f"❌ Fehler beim Abrufen der GALERIA-Seite (Selenium): {e}"
-
-    offers = []
-    for item in soup.select("article[data-test='product-tile']"):
-        title_el = item.select_one("h2")
-        price_el = item.select_one(".product-tile-price__actual")
-
-        if title_el and price_el:
-            title = title_el.text.strip()
-            price = price_el.text.strip()
-            if "pokemon" in title.lower():
-                offers.append(f"{title} – **{price}**")
-
-    if offers:
-        return "🎁 GALERIA-Angebote:\n" + "\n".join(offers)
-    else:
-        return "Keine aktuellen GALERIA Pokémon-Angebote gefunden."
+# Galeria-Angebote mit Seleniu
 
 # Gemeinsame Post-Funktion
 async def post_daily():
@@ -139,14 +112,12 @@ async def post_daily():
 
     smyths_msg = check_smyths_offers()
     lidl_msg = check_lidl_offers()
-    galeria_msg = check_galeria_offers_selenium()
 
     now = datetime.datetime.now().strftime("%d.%m.%Y")
     message = (
         f"🛒 **Tägliche Pokémon-Angebote ({now})**\n\n"
         f"{smyths_msg}\n\n"
         f"{lidl_msg}\n\n"
-        f"{galeria_msg}"
     )
 
     await channel.send(message)
