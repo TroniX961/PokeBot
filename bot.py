@@ -12,7 +12,8 @@ CHANNEL_ID = 1376580028636205238  # ❗ Ersetze das mit der Channel-ID deines An
 @bot.event
 async def on_ready():
     print(f"Bot ist eingeloggt als {bot.user}")
-    daily_post.start()
+    await daily_post()  # ➕ Sofort eine Nachricht posten
+    daily_post.start()  # ➕ Danach täglicher Rhythmus
 
 @tasks.loop(hours=24)
 async def daily_post():
