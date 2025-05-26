@@ -18,23 +18,22 @@ CHANNEL_ID = 1376580028636205238
 
 # Funktion: Smyths-Angebote prüfen
 def check_smyths_offers():
-    url = "https://www.smythstoys.com/de/de-de/search/?text=pokemon+booster"
+    url = "https://www.smythstoys.com/de/de-de/search/?text=pokemon"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/114.0.0.0 Safari/537.36",
         "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Referer": "https://www.smythstoys.com/"
     }
 
     time.sleep(2)
-    session = requests.Session()
+    
     try:
-        response = session.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
     except Exception as e:
-        return f"Fehler beim Abrufen der Smyths-Seite: {e}"
+        return f"❌ Fehler beim Abrufen der Smyths-Seite: {e}"
 
     soup = BeautifulSoup(response.text, "html.parser")
     offers = []
@@ -42,19 +41,20 @@ def check_smyths_offers():
     for product in soup.select(".product-tile"):
         title_el = product.select_one(".product-title")
         price_now = product.select_one(".price-now")
-        price_was = product.select_one(".price-was")
+        price_old = product.select_one(".price-was")
 
-        if title_el and price_now and price_was:
+        if title_el and price_now and price_old:
             title = title_el.text.strip()
-            price_now = price_now.text.strip()
-            price_was = price_was.text.strip()
-            if "booster" in title.lower():
-                offers.append(f"{title} - **{price_now}** statt ~~{price_was}~~")
+            new_price = price_now.text.strip()
+            old_price = price_old.text.strip()
+
+            if "pokemon" in title.lower():  # ← erweitert statt nur "booster"
+                offers.append(f"{title} – ~~{old_price}~~ → **{new_price}**")
 
     if offers:
-        return "🏍️ Smyths Angebote:\n" + "\n".join(offers)
+        return "🛍️ Smyths Angebote:\n" + "\n".join(offers)
     else:
-        return "Keine aktuellen Smyths Booster-Angebote gefunden."
+        return "Keine reduzierten Smyths Pokémon-Angebote gefunden."
 
 # Lidl
 
