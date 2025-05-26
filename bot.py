@@ -5,8 +5,10 @@ import datetime
 import requests
 from bs4 import BeautifulSoup
 import time
-import requests
-from bs4 import BeautifulSoup
+
+CHANNEL_ID = 1376580028636205238  # Deine Discord-Channel-ID als int
+
+PokeBot = commands.Bot(command_prefix="!")
 
 def check_smyths_offers():
     url = "https://www.smythstoys.com/de/de-de/toys/spielzeug/pokemon/boosters"
@@ -45,18 +47,9 @@ def check_smyths_offers():
     else:
         return "Keine aktuellen Smyths Booster-Angebote gefunden."
 
-
-CHANNEL_ID = 1376580028636205238  # ❗ Ersetze das mit der Channel-ID deines Angebotskanals
-
-@bot.event
-async def on_ready():
-    print(f"Bot ist eingeloggt als {bot.user}")
-    await daily_post()  # ➕ Sofort eine Nachricht posten
-    daily_post.start()  # ➕ Danach täglicher Rhythmus
-
 @tasks.loop(hours=24)
 async def daily_post():
-    channel = bot.get_channel(CHANNEL_ID)
+    channel = PokeBot.get_channel(CHANNEL_ID)
     if not channel:
         print("Channel nicht gefunden!")
         return
@@ -68,5 +61,10 @@ async def daily_post():
 
     await channel.send(message)
 
-bot.run(os.getenv("DISCORD_TOKEN"))
+@PokeBot.event
+async def on_ready():
+    print(f"PokeBot ist eingeloggt als {PokeBot.user}")
+    await daily_post()  # Sofort posten beim Start
+    daily_post.start()  # Danach jeden Tag posten
 
+PokeBot.run(os.getenv("DISCORD_TOKEN"))
