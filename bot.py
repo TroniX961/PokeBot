@@ -7,7 +7,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-CHANNEL_ID = 123456789012345678  # ❗ Ersetze das mit der Channel-ID deines Angebotskanals
+CHANNEL_ID = 1376580028636205238  # ❗ Ersetze das mit der Channel-ID deines Angebotskanals
 
 @bot.event
 async def on_ready():
