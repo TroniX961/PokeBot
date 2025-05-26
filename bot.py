@@ -24,4 +24,3 @@ async def daily_post():
 
 bot.run(os.getenv("DISCORD_TOKEN"))
 
-Sofortige Nachricht beim Bot-Start aktiviert
